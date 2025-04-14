@@ -1,0 +1,6 @@
+@DAMAWebApi_HostAddress = http://localhost:5077
+
+GET {{DAMAWebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
