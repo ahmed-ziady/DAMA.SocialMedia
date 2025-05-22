@@ -1,12 +1,20 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace DAMA.Domain.Entities
 {
     public class Role : IdentityRole<int>
     {
-        public Role() : base() { }
+        public Role()
+        {
+        }
 
-        public virtual ICollection<User> Users { get; set; } = new List<User>();
+        public Role(string roleName) : base(roleName)
+        {
+        }
     }
 }

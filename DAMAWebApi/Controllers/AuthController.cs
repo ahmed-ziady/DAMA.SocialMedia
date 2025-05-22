@@ -1,169 +1,134 @@
-﻿using DAMA.Application.Interfaces;
+﻿using DAMA.Application.DTOs.AuthDtos;
+using DAMA.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace DAMAWebApi.Controllers
 {
-   
-    [Route("api/auth")]
-    [Authorize]
     [ApiController]
-    public class AuthController : ControllerBase
+    [Route("api/[controller]")]
+    [Authorize]
+    public class AuthController(IAuthService authService) : ControllerBase
     {
-        private readonly IAuthService _authService;
+        private readonly IAuthService _authService = authService;
 
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
 
-private int GetCurrentUserId()
-{
-    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-    Console.WriteLine($"Extracted User ID: {userIdClaim ?? "NULL"}");
-
-    if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-    {
-        throw new UnauthorizedAccessException("Invalid token: missing or invalid user ID.");
-    }
-
-    return userId;
-}
+        // Register User (images optional)
         [AllowAnonymous]
-
-        // Register User (Images are Optional)
         [HttpPost("register")]
-        public async Task<IActionResult> Register(
-            [FromQuery] string firstName,
-            [FromQuery] string lastName,
-            [FromQuery] DateOnly dateOfBirth, // Required
-            [FromQuery] string email,
-            [FromQuery] string password,
-            [FromQuery] string? profileImageUrl = null, // Optional
-            [FromQuery] string? portfolioImageUrl = null) // Optional
+        public async Task<IActionResult> Register([FromForm] RegisterDto registerDto)
         {
-            if (string.IsNullOrWhiteSpace(firstName) ||
-                string.IsNullOrWhiteSpace(lastName) ||
-                string.IsNullOrWhiteSpace(email) ||
-                string.IsNullOrWhiteSpace(password))
-            {
-                return BadRequest("First name, last name, email, password, and date of birth are required.");
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var success = await _authService.RegisterUser(firstName, lastName, dateOfBirth, email, password, profileImageUrl, portfolioImageUrl);
-            if (!success)
-            {
+            var result = await _authService.RegisterUser(registerDto);
+            if (!result)
                 return BadRequest("Registration failed. Email may already be registered.");
-            }
+
             return Ok("Please check your email for the verification code.");
         }
 
-
-
-        [AllowAnonymous]
-
         // Verify Email with Code
+        [AllowAnonymous]
         [HttpPost("verify")]
-        public async Task<IActionResult> VerifyEmail(
-            [FromQuery] string email,
-            [FromQuery] string code)
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto verifyEmailDto)
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(code))
+            if (string.IsNullOrWhiteSpace(verifyEmailDto.Email) || string.IsNullOrWhiteSpace(verifyEmailDto.Code))
                 return BadRequest("Email and verification code are required.");
 
-            var success = await _authService.ConfirmVerificationCode(email, code);
-            if (!success)
-                return BadRequest("Invalid verification code.");
-
-            return Ok("Email verified successfully. You can now log in.");
+            var result = await _authService.ConfirmVerificationCode(verifyEmailDto.Email, verifyEmailDto.Code);
+            return result ? Ok("Email verified successfully. You can now log in.") : BadRequest("Invalid verification code.");
         }
-
-
-        [AllowAnonymous]
 
         // Resend Verification Code
+        [AllowAnonymous]
         [HttpPost("resend-verification")]
-        public async Task<IActionResult> ResendVerification([FromQuery] string email)
+        public async Task<IActionResult> ResendVerification([FromBody] string email)
         {
             if (string.IsNullOrWhiteSpace(email))
                 return BadRequest("Email is required.");
 
-            var success = await _authService.ResendVerificationCode(email);
-            if (!success)
-                return BadRequest("Verification code could not be resent, maybe it's already verified.");
-
-            return Ok("Verification code resent successfully.");
+            var result = await _authService.ResendVerificationCode(email);
+            return result
+                ? Ok("Verification code resent successfully.")
+                : BadRequest("Verification code could not be resent. It may already be verified.");
         }
 
-        // Forgot Password (Sends Verification Code)
+        // Forgot Password (send verification code)
+        [AllowAnonymous]
         [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromQuery] string email)
+        public async Task<IActionResult> ForgotPassword([FromBody] string email)
         {
             if (string.IsNullOrWhiteSpace(email))
                 return BadRequest("Email is required.");
 
-            var success = await _authService.ForgotPassword(email);
-            return success
-                ? Ok("A password reset verification code has been sent to your email.")
+            var result = await _authService.ForgotPassword(email);
+            return result
+                ? Ok("A password reset code has been sent to your email.")
                 : BadRequest("User not found.");
         }
 
-        // Reset Password with Verification Code
+        // Reset Password
+        [AllowAnonymous]
         [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword(
-            [FromQuery] string email,
-            [FromQuery] string verificationCode,
-            [FromQuery] string newPassword)
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
         {
-            if (string.IsNullOrWhiteSpace(email) ||
-                string.IsNullOrWhiteSpace(verificationCode) ||
-                string.IsNullOrWhiteSpace(newPassword))
-            {
+            if (string.IsNullOrWhiteSpace(resetPasswordDto.Email) || string.IsNullOrWhiteSpace(resetPasswordDto.VerificationCode) || string.IsNullOrWhiteSpace(resetPasswordDto.NewPassword))
                 return BadRequest("Email, verification code, and new password are required.");
-            }
 
-            var success = await _authService.ResetPassword(email, verificationCode, newPassword);
-            return success
+            var result = await _authService.ResetPassword(resetPasswordDto.Email, resetPasswordDto.VerificationCode, resetPasswordDto.NewPassword);
+            return result
                 ? Ok("Password reset successfully.")
                 : BadRequest("Invalid or expired verification code.");
         }
 
-        // Login User
+        // Login
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> Login(
-            [FromQuery] string email,
-            [FromQuery] string password)
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(loginDto.Email) || string.IsNullOrWhiteSpace(loginDto.Password))
                 return BadRequest("Email and password are required.");
 
-            var token = await _authService.LoginUser(email, password);
-            return Ok(new { Token = token });
+            try
+            {
+                var token = await _authService.LoginUser(loginDto);
+                return Ok(token);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
         }
 
-        // Logout User
-        [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
+        // Logout
+        //[HttpPost("logout")]
+        //public async Task<IActionResult> Logout([FromBody] int id)
+        //{
+        //    var userId = id;
+        //    var result = await _authService.Logout(userId);
+        //    return result ? Ok("User logged out successfully.") : BadRequest("Logout failed.");
+        //}
+
+        //// Delete Account
+        //[Authorize]
+        //[HttpDelete("delete-account")]
+        //public async Task<IActionResult> DeleteAccount([FromBody] int id)
+        //{
+        //    var userId = id;
+        //    var result = await _authService.DeleteAccount(userId);
+        //    return result ? Ok("User account deleted successfully.") : NotFound("User not found.");
+        //}
+
+        // Refresh Token
+        [AllowAnonymous]
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
-            int userId = GetCurrentUserId();
-            Console.WriteLine("ASDFFFFAFDASFDA:" + userId);
-            var success = await _authService.Logout(userId);
-            return success ? Ok("User logged out successfully.") : BadRequest("Logout failed.");
+            var result = await _authService.RefreshTokenAsync(request);
+            return result is not null ? Ok(result) : Unauthorized("Invalid or expired refresh token.");
         }
 
-        // Delete Account (Using token's user ID)
-        [HttpDelete("delete-account")]
-        public async Task<IActionResult> DeleteAccount()
-        {
-            int userId = GetCurrentUserId();
-            var success = await _authService.DeleteAccount(userId);
-            return success ? Ok("User account deleted successfully.") : NotFound("User not found or could not be deleted.");
-        }
     }
 }

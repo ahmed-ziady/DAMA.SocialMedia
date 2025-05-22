@@ -22,81 +22,6 @@ namespace DAMA.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("DAMA.Domain.Entities.Comment", b =>
-                {
-                    b.Property<int>("CommentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("CommentID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CommentId"));
-
-                    b.Property<DateTime?>("CommentDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int")
-                        .HasColumnName("PostID");
-
-                    b.HasKey("CommentId")
-                        .HasName("PK__Comment__C3B4DFAA2372FD48");
-
-                    b.HasIndex("Id");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("Comment", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.FlaggedPost", b =>
-                {
-                    b.Property<int>("FlagId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("FlagID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FlagId"));
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<string>("FlagReason")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int")
-                        .HasColumnName("PostID");
-
-                    b.Property<string>("ReviewStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("FlagId")
-                        .HasName("PK__FlaggedP__780D45B3C07A5E19");
-
-                    b.HasIndex("Id");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("FlaggedPost", (string)null);
-                });
-
             modelBuilder.Entity("DAMA.Domain.Entities.FriendRequest", b =>
                 {
                     b.Property<int>("FriendRequestId")
@@ -105,23 +30,26 @@ namespace DAMA.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FriendRequestId"));
 
-                    b.Property<DateTime>("DateSent")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("ReceiverId")
                         .HasColumnType("int");
 
-                    b.Property<int>("RequestStatus")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("RequestDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("FriendRequestId");
 
                     b.HasIndex("ReceiverId");
 
-                    b.HasIndex("SenderId");
+                    b.HasIndex("SenderId", "ReceiverId")
+                        .IsUnique();
 
                     b.ToTable("FriendRequests");
                 });
@@ -135,7 +63,9 @@ namespace DAMA.Persistence.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FriendshipId"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<int>("ReceiverId")
                         .HasColumnType("int");
@@ -143,338 +73,81 @@ namespace DAMA.Persistence.Migrations
                     b.Property<int>("RequesterId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserId1")
-                        .HasColumnType("int");
-
                     b.HasKey("FriendshipId");
 
                     b.HasIndex("ReceiverId");
 
-                    b.HasIndex("RequesterId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId1");
+                    b.HasIndex("RequesterId", "ReceiverId")
+                        .IsUnique();
 
                     b.ToTable("Friendships");
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.ModerationAction", b =>
-                {
-                    b.Property<int>("ActionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("ActionID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ActionId"));
-
-                    b.Property<DateTime?>("ActionDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<string>("ActionType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int")
-                        .HasColumnName("PostID");
-
-                    b.HasKey("ActionId")
-                        .HasName("PK__Moderati__FFE3F4B97E41AFDB");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("ModerationAction", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.Notification", b =>
-                {
-                    b.Property<int>("NotificationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("NotificationID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationId"));
-
-                    b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    b.Property<int>("NotificationTypeId")
-                        .HasColumnType("int")
-                        .HasColumnName("NotificationTypeID");
-
-                    b.Property<string>("Status")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("NotificationId")
-                        .HasName("PK__Notifica__20CF2E32FBCDEB63");
-
-                    b.HasIndex("Id");
-
-                    b.HasIndex("NotificationTypeId");
-
-                    b.ToTable("Notification", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.NotificationType", b =>
-                {
-                    b.Property<int>("NotificationTypeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("NotificationTypeID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationTypeId"));
-
-                    b.Property<string>("TypeName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("NotificationTypeId")
-                        .HasName("PK__Notifica__299002A1BAD69468");
-
-                    b.HasIndex(new[] { "TypeName" }, "UQ__Notifica__D4E7DFA88561D1C2")
-                        .IsUnique();
-
-                    b.ToTable("NotificationType", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.Post", b =>
-                {
-                    b.Property<int>("PostId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("PostID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PostId"));
-
-                    b.Property<int>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    b.Property<string>("PostContent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("PostDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<int>("PostTypeId")
-                        .HasColumnType("int")
-                        .HasColumnName("PostTypeID");
-
-                    b.HasKey("PostId")
-                        .HasName("PK__Post__AA126038ABBB63BD");
-
-                    b.HasIndex("Id");
-
-                    b.HasIndex("PostTypeId");
-
-                    b.ToTable("Post", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.PostReaction", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int")
-                        .HasColumnName("PostID");
-
-                    b.Property<string>("ReactionType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id", "PostId")
-                        .HasName("PK__Post_Rea__8D29EAAF20F3EA9C");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("Post_Reaction", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.PostReport", b =>
-                {
-                    b.Property<int>("ReportId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("ReportID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReportId"));
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int")
-                        .HasColumnName("PostID");
-
-                    b.Property<string>("ReportStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("ReportTypeId")
-                        .HasColumnType("int")
-                        .HasColumnName("ReportTypeID");
-
-                    b.HasKey("ReportId")
-                        .HasName("PK__PostRepo__D5BD48E5BB9AEAEE");
-
-                    b.HasIndex("Id");
-
-                    b.HasIndex("PostId");
-
-                    b.HasIndex("ReportTypeId");
-
-                    b.ToTable("PostReport", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.PostType", b =>
-                {
-                    b.Property<int>("PostTypeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("PostTypeID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PostTypeId"));
-
-                    b.Property<string>("TypeName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("PostTypeId")
-                        .HasName("PK__PostType__AB2126101F76BBC8");
-
-                    b.HasIndex(new[] { "TypeName" }, "UQ__PostType__D4E7DFA85D56D9B6")
-                        .IsUnique();
-
-                    b.ToTable("PostType", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.ReportType", b =>
-                {
-                    b.Property<int>("ReportTypeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("ReportTypeID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReportTypeId"));
-
-                    b.Property<string>("ReportTypeName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("ReportTypeId")
-                        .HasName("PK__ReportTy__78CF8C83D28F29DC");
-
-                    b.HasIndex(new[] { "ReportTypeName" }, "UQ__ReportTy__D0F3D65679BF4262")
-                        .IsUnique();
-
-                    b.ToTable("ReportType", (string)null);
                 });
 
             modelBuilder.Entity("DAMA.Domain.Entities.Role", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("RoleID");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Role__8AFACE3AA1298EE2");
+                    b.HasKey("Id");
 
-                    b.HasIndex(new[] { "Name" }, "UQ__Role__8A2B616047050847")
+                    b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasFilter("[Name] IS NOT NULL");
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
 
-                    b.ToTable("Role", (string)null);
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("DAMA.Domain.Entities.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<string>("Bio")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
+                    b.Property<string>("CoverImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly?>("DateOfBirth")
                         .HasColumnType("date");
 
                     b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("bit");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -483,14 +156,15 @@ namespace DAMA.Persistence.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("NormalizedEmail")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedUserName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PasswordHash")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
@@ -498,16 +172,14 @@ namespace DAMA.Persistence.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("PortfolioImageUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<string>("ProfileImageUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RefreshToken")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiryTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -516,50 +188,20 @@ namespace DAMA.Persistence.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("VerificationCode")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
 
-                    b.HasKey("Id")
-                        .HasName("PK_User");
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
 
-                    b.HasIndex(new[] { "Email" }, "UQ_User_Email")
-                        .IsUnique();
-
-                    b.ToTable("User", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.UserProfile", b =>
-                {
-                    b.Property<int>("UserProfileId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("UserProfileID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserProfileId"));
-
-                    b.Property<string>("Bio")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<int?>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    b.Property<string>("ProfilePictureUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("ProfilePictureURL");
-
-                    b.HasKey("UserProfileId")
-                        .HasName("PK__UserProf__9E267F42AABEA4F2");
-
-                    b.HasIndex(new[] { "Id" }, "UQ__UserProf__1788CCADABECC2C5")
+                    b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasFilter("[Id] IS NOT NULL");
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("UserProfile", (string)null);
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -581,7 +223,9 @@ namespace DAMA.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RoleClaims");
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("RoleClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
@@ -603,7 +247,9 @@ namespace DAMA.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserClaims");
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
@@ -622,7 +268,9 @@ namespace DAMA.Persistence.Migrations
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
-                    b.ToTable("UserLogins");
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
@@ -635,7 +283,9 @@ namespace DAMA.Persistence.Migrations
 
                     b.HasKey("UserId", "RoleId");
 
-                    b.ToTable("UserRoles");
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
@@ -654,77 +304,19 @@ namespace DAMA.Persistence.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("UserTokens");
-                });
-
-            modelBuilder.Entity("UserRole", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int")
-                        .HasColumnName("RoleID");
-
-                    b.HasKey("Id", "RoleId")
-                        .HasName("PK_User_Role");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("User_Role", (string)null);
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.Comment", b =>
-                {
-                    b.HasOne("DAMA.Domain.Entities.User", "User")
-                        .WithMany("Comments")
-                        .HasForeignKey("Id")
-                        .IsRequired()
-                        .HasConstraintName("FK_Comment_User");
-
-                    b.HasOne("DAMA.Domain.Entities.Post", "Post")
-                        .WithMany("Comments")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Comment_Post");
-
-                    b.Navigation("Post");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.FlaggedPost", b =>
-                {
-                    b.HasOne("DAMA.Domain.Entities.User", "User")
-                        .WithMany("FlaggedPosts")
-                        .HasForeignKey("Id")
-                        .IsRequired()
-                        .HasConstraintName("FK_FlaggedPost_User");
-
-                    b.HasOne("DAMA.Domain.Entities.Post", "Post")
-                        .WithMany("FlaggedPosts")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_FlaggedPost_Post");
-
-                    b.Navigation("Post");
-
-                    b.Navigation("User");
+                    b.ToTable("UserTokens", (string)null);
                 });
 
             modelBuilder.Entity("DAMA.Domain.Entities.FriendRequest", b =>
                 {
                     b.HasOne("DAMA.Domain.Entities.User", "Receiver")
-                        .WithMany("FriendRequestsReceived")
+                        .WithMany("ReceivedFriendRequests")
                         .HasForeignKey("ReceiverId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("DAMA.Domain.Entities.User", "Sender")
-                        .WithMany("FriendRequestsSent")
+                        .WithMany("SentFriendRequests")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -737,206 +329,82 @@ namespace DAMA.Persistence.Migrations
             modelBuilder.Entity("DAMA.Domain.Entities.Friendship", b =>
                 {
                     b.HasOne("DAMA.Domain.Entities.User", "Receiver")
-                        .WithMany()
+                        .WithMany("FriendshipsReceiver")
                         .HasForeignKey("ReceiverId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("DAMA.Domain.Entities.User", "Requester")
-                        .WithMany()
+                        .WithMany("FriendshipsRequester")
                         .HasForeignKey("RequesterId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("DAMA.Domain.Entities.User", null)
-                        .WithMany("FriendshipRequestsReceived")
-                        .HasForeignKey("UserId");
-
-                    b.HasOne("DAMA.Domain.Entities.User", null)
-                        .WithMany("FriendshipRequestsSent")
-                        .HasForeignKey("UserId1");
 
                     b.Navigation("Receiver");
 
                     b.Navigation("Requester");
                 });
 
-            modelBuilder.Entity("DAMA.Domain.Entities.ModerationAction", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
-                    b.HasOne("DAMA.Domain.Entities.Post", "Post")
-                        .WithMany("ModerationActions")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_ModerationAction_Post");
-
-                    b.Navigation("Post");
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.Notification", b =>
-                {
-                    b.HasOne("DAMA.Domain.Entities.User", "User")
-                        .WithMany("Notifications")
-                        .HasForeignKey("Id")
-                        .IsRequired()
-                        .HasConstraintName("FK_Notification_User");
-
-                    b.HasOne("DAMA.Domain.Entities.NotificationType", "NotificationType")
-                        .WithMany("Notifications")
-                        .HasForeignKey("NotificationTypeId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Notification_NotificationType");
-
-                    b.Navigation("NotificationType");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.Post", b =>
-                {
-                    b.HasOne("DAMA.Domain.Entities.User", "User")
-                        .WithMany("Posts")
-                        .HasForeignKey("Id")
-                        .IsRequired()
-                        .HasConstraintName("FK_Post_User");
-
-                    b.HasOne("DAMA.Domain.Entities.PostType", "PostType")
-                        .WithMany("Posts")
-                        .HasForeignKey("PostTypeId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Post_PostType");
-
-                    b.Navigation("PostType");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.PostReaction", b =>
-                {
-                    b.HasOne("DAMA.Domain.Entities.User", "User")
-                        .WithMany("PostReactions")
-                        .HasForeignKey("Id")
-                        .IsRequired()
-                        .HasConstraintName("FK_Post_Reaction_User");
-
-                    b.HasOne("DAMA.Domain.Entities.Post", "Post")
-                        .WithMany("PostReactions")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Post_Reaction_Post");
-
-                    b.Navigation("Post");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.PostReport", b =>
-                {
-                    b.HasOne("DAMA.Domain.Entities.User", "User")
-                        .WithMany("PostReports")
-                        .HasForeignKey("Id")
-                        .IsRequired()
-                        .HasConstraintName("FK_PostReport_User");
-
-                    b.HasOne("DAMA.Domain.Entities.Post", "Post")
-                        .WithMany("PostReports")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_PostReport_Post");
-
-                    b.HasOne("DAMA.Domain.Entities.ReportType", "ReportType")
-                        .WithMany("PostReports")
-                        .HasForeignKey("ReportTypeId")
-                        .IsRequired()
-                        .HasConstraintName("FK_PostReport_ReportType");
-
-                    b.Navigation("Post");
-
-                    b.Navigation("ReportType");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DAMA.Domain.Entities.UserProfile", b =>
-                {
-                    b.HasOne("DAMA.Domain.Entities.User", "User")
-                        .WithOne("UserProfile")
-                        .HasForeignKey("DAMA.Domain.Entities.UserProfile", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_UserProfile_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("UserRole", b =>
-                {
-                    b.HasOne("DAMA.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("Id")
-                        .IsRequired()
-                        .HasConstraintName("FK_User_Role_User");
-
                     b.HasOne("DAMA.Domain.Entities.Role", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_User_Role_Role");
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("DAMA.Domain.Entities.NotificationType", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
-                    b.Navigation("Notifications");
+                    b.HasOne("DAMA.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("DAMA.Domain.Entities.Post", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
-                    b.Navigation("Comments");
-
-                    b.Navigation("FlaggedPosts");
-
-                    b.Navigation("ModerationActions");
-
-                    b.Navigation("PostReactions");
-
-                    b.Navigation("PostReports");
+                    b.HasOne("DAMA.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("DAMA.Domain.Entities.PostType", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.Navigation("Posts");
+                    b.HasOne("DAMA.Domain.Entities.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DAMA.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("DAMA.Domain.Entities.ReportType", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
-                    b.Navigation("PostReports");
+                    b.HasOne("DAMA.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("DAMA.Domain.Entities.User", b =>
                 {
-                    b.Navigation("Comments");
+                    b.Navigation("FriendshipsReceiver");
 
-                    b.Navigation("FlaggedPosts");
+                    b.Navigation("FriendshipsRequester");
 
-                    b.Navigation("FriendRequestsReceived");
+                    b.Navigation("ReceivedFriendRequests");
 
-                    b.Navigation("FriendRequestsSent");
-
-                    b.Navigation("FriendshipRequestsReceived");
-
-                    b.Navigation("FriendshipRequestsSent");
-
-                    b.Navigation("Notifications");
-
-                    b.Navigation("PostReactions");
-
-                    b.Navigation("PostReports");
-
-                    b.Navigation("Posts");
-
-                    b.Navigation("UserProfile");
+                    b.Navigation("SentFriendRequests");
                 });
 #pragma warning restore 612, 618
         }

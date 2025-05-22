@@ -1,74 +1,118 @@
-﻿using DAMA.Application.Interfaces;
+﻿using DAMA.Application.DTOs.FriendDtos;
+using DAMA.Application.Interfaces;
+using DAMA.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace DAMAWebApi.Controllers
 {
-    [Route("api/friends")]
     [ApiController]
+    [Route("api/[controller]")]
     [Authorize]
-    public class FriendController(IFriendService friendService) : ControllerBase
+    public class FriendsController(UserManager<User> _userManager, IFriendsServices _friendService) : ControllerBase
     {
-        private readonly IFriendService _friendService = friendService;
 
-        private int GetCurrentUserId()
+
+        private int CurrentUserId => int.Parse(_userManager.GetUserId(User)!);
+
+        [HttpPost("sendFriendRequest")]
+        public async Task<IActionResult> SendRequest([FromBody] FriendRequestDto dto)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                              ?? User.FindFirst("nameid")?.Value;
-            return int.TryParse(userIdClaim, out var userId)
-                ? userId
-                : throw new UnauthorizedAccessException("Invalid token.");
+            try
+            {
+                await _friendService.SendFriendRequest(CurrentUserId, dto.ReceiverId);
+                return Ok(new { Message = "Friend request sent successfully.", dto.ReceiverId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
 
-        [HttpPost("send-request")]
-        public async Task<IActionResult> SendFriendRequest([FromQuery] int receiverId)
+        [HttpPut("requests/{requestId}/accept")]
+        public async Task<IActionResult> AcceptRequest(int requestId)
         {
-            int senderId = GetCurrentUserId();
-            var success = await _friendService.SendFriendRequest(senderId, receiverId);
-            return success ? Ok("Friend request sent.") : BadRequest("Request already sent or invalid.");
+            try
+            {
+                await _friendService.AcceptFriendRequest(requestId, CurrentUserId);
+                return Ok(new { Message = "Friend request accepted.", RequestId = requestId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
 
-        [HttpPost("accept-request")]
-        public async Task<IActionResult> AcceptFriendRequest([FromQuery] int requestId)
+        [HttpPut("requests/{requestId}/reject")]
+        public async Task<IActionResult> RejectRequest(int requestId)
         {
-            int userId = GetCurrentUserId();
-            var success = await _friendService.AcceptFriendRequest(requestId, userId);
-            return success ? Ok("Friend request accepted.") : NotFound("Request not found or unauthorized.");
+            try
+            {
+                await _friendService.RejectFriendRequest(requestId, CurrentUserId);
+                return Ok(new { Message = "Friend request rejected.", RequestId = requestId });
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
 
-        [HttpPost("reject-request")]
-        public async Task<IActionResult> RejectFriendRequest([FromQuery] int requestId)
+        [HttpGet("requests/pending")]
+        public async Task<ActionResult<List<PendingFriendsDto>>> GetPendingRequests()
         {
-            int userId = GetCurrentUserId();
-            var success = await _friendService.RejectFriendRequest(requestId, userId);
-            return success ? Ok("Friend request rejected.") : NotFound("Request not found or unauthorized.");
+            var result = await _friendService.GetPendingRequests(CurrentUserId);
+            return Ok(new
+            {
+                Message = "Pending requests retrieved successfully.",
+                result.Count,
+                Data = result
+            });
         }
 
-        [HttpDelete("remove-friend")]
-        public async Task<IActionResult> RemoveFriend([FromQuery] int friendId)
+        [HttpGet("get-friends")]
+        public async Task<ActionResult<FriendsResponseDto>> GetFriends()
         {
-            int userId = GetCurrentUserId();
-            var success = await _friendService.RemoveFriend(userId, friendId);
-            return success ? Ok("Friend removed.") : NotFound("Friendship not found.");
+            var result = await _friendService.GetFriends(CurrentUserId);
+            return Ok(new
+            {
+                Message = "Friends retrieved successfully",
+                result.TotalCount,
+                Data = result.Friends
+            });
+        }
+        [HttpDelete("{friendId}")]
+        public async Task<IActionResult> RemoveFriend(int friendId)
+        {
+            await _friendService.RemoveFriend(CurrentUserId, friendId);
+            return NoContent();
         }
 
-        [HttpGet("list")]
-        public async Task<IActionResult> GetFriendsList()
+        [HttpGet("GetRequestsSended")]
+        public async Task<ActionResult<List<FriendsDto>>> GetRequestsSended()
         {
-            int userId = GetCurrentUserId();
-            var friends = await _friendService.GetFriendsList(userId);
-            return Ok(friends);
+            var result = await _friendService.GetRequestsSended(CurrentUserId);
+            return Ok(new
+            {
+                Message = "Sent requests retrieved successfully.",
+                result.Count,
+                Data = result
+            });
         }
 
-        [HttpGet("requests")]
-        public async Task<IActionResult> GetFriendRequests()
+        [HttpPut("requests/{requestId}/cancel")]
+        public async Task<IActionResult> CancelRequest(int requestId)
         {
-            int userId = GetCurrentUserId();
-            var requests = await _friendService.GetFriendRequests(userId);
-            return Ok(requests);
+            try
+            {
+                await _friendService.CancelFriendReuests(requestId);
+                return Ok(new { Message = "Friend request cancelled.", RequestId = requestId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
     }
 }

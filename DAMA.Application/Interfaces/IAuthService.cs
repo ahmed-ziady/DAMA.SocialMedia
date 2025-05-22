@@ -1,19 +1,19 @@
-﻿using System.Threading.Tasks;
+﻿using DAMA.Application.DTOs.AuthDtos;
+using System.Threading.Tasks;
 
 namespace DAMA.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<bool> RegisterUser(string firstName, string lastName, DateOnly dateOfBirth, string email, string password, string? profileImageUrl, string? portfolioImageUrl);
+        Task<bool> RegisterUser(RegisterDto registerDto);
         Task<bool> ConfirmVerificationCode(string email, string code);
         Task<bool> ResendVerificationCode(string email);
         Task<bool> ForgotPassword(string email);
         Task<bool> ResetPassword(string email, string verificationCode, string newPassword);
-        Task<string> LoginUser(string email, string password);
+        Task<TokenResponseDto> LoginUser(LoginDto loginDto);
         Task<bool> Logout(int userId);
         Task<bool> DeleteAccount(int userId);
-        string? GetCurrentUserId();
+        Task<TokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request);
 
-        Task<bool> IsTokenRevoked(string token);
     }
 }

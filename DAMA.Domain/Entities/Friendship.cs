@@ -5,14 +5,21 @@ namespace DAMA.Domain.Entities
 {
     public class Friendship
     {
+        [Key]
         public int FriendshipId { get; set; }
 
-        public int RequesterId { get; set; }  // User who sent the request
-        public int ReceiverId { get; set; }   // User who received the request
+        [Required]
+        [ForeignKey("Requester")]
+        public int RequesterId { get; set; }
+
+        [Required]
+        [ForeignKey("Receiver")]
+        public int ReceiverId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public User? Requester { get; set; }  // Navigation to the sender
-        public User? Receiver { get; set; }
+        public virtual User Requester { get; set; } = null!;
+        public virtual User Receiver { get; set; } = null!;
+
     }
 }

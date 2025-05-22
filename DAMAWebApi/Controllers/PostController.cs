@@ -1,4 +1,4 @@
-﻿using DAMA.Application.Interfaces;
+﻿using DAMA.Application.DTOs.Posts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

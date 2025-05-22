@@ -1,9 +1,7 @@
 ﻿using DAMA.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
-using System;
 using System.Net;
 using System.Net.Mail;
-using System.Threading.Tasks;
 
 namespace DAMA.Infrastructure.Services
 {
@@ -15,9 +13,9 @@ namespace DAMA.Infrastructure.Services
         {
             try
             {
-                // ✅ Load Email Configuration
                 string smtpServer = _config["Email:SmtpServer"] ?? throw new InvalidOperationException("SMTP Server is missing.");
                 int smtpPort = int.Parse(_config["Email:Port"] ?? "587");
+
                 bool enableSsl = bool.Parse(_config["Email:EnableSsl"] ?? "true");
                 string email = _config["Email:Username"] ?? throw new InvalidOperationException("Email address is missing.");
                 string password = _config["Email:Password"] ?? throw new InvalidOperationException("Email password is missing.");

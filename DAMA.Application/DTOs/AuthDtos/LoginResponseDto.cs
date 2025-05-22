@@ -1,5 +1,10 @@
-﻿public class LoginResponseDto
+﻿namespace DAMA.Application.DTOs.AuthDtos
 {
-    public string Token { get; set; } = default!;
-    public int UserId { get; set; }
+    public record LoginResponseDto
+    {
+        
+        public string Token { get; set; } = default!;
+       
+        public int UserId { get; set; }
+    }
 }
