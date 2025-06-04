@@ -53,7 +53,8 @@ namespace DAMA.Infrastructure.Services
         public async Task DeletePostAsync(int postId)
         {
             var post = await context.Posts.FindAsync(postId);
-            if (post == null) return;
+            if (post == null)
+                throw new Exception("Post was deleted or not found");
 
 
             if (post.MediaUrl != null)
@@ -92,7 +93,23 @@ namespace DAMA.Infrastructure.Services
             return posts;
         }
 
+        public async Task<List<NewsFeedDto>> GetUserPostsAsync(int UserId, int page = 1, int pageSize = 50)
+        {
+            var posts = await context.Posts.AsNoTracking().Where(p => p.UserId == UserId).OrderByDescending(p => p.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new NewsFeedDto
+                {
+                    MediaUrl = p.MediaUrl,
 
+                    PostId = p.PostId,
+                    PostTitle = p.Title,
+                    PostBody = p.Content
+
+                })
+                .ToListAsync();
+            return posts;
+        }
 
         private static async Task DeleteMediaFileIfExists(string mediaUrl)
         {

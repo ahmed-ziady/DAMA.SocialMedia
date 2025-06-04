@@ -9,10 +9,22 @@ namespace DAMAWebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class ProfileController(IProfile _profile, IFriendsServices _friendsServices) : ControllerBase
+    public class ProfileController(IProfile _profile, IFriendsServices _friendsServices, IPostServicess postServicess) : ControllerBase
     {
-        private int? CurrentUserId =>
-            int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+        private int? CurrentUserId
+        {
+            get
+            {
+                var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdString))
+                    return null;
+
+                if (int.TryParse(userIdString, out int userId))
+                    return userId;
+
+                return null;
+            }
+        }
 
         [HttpGet("basicInfo")]
         public async Task<IActionResult> GetProfile(int id)
@@ -23,12 +35,14 @@ namespace DAMAWebApi.Controllers
             var profile = await _profile.GetProfileAsync(id);
             return Ok(profile);
         }
+
+
+
         [HttpGet("isFriend/{friendId}")]
         public async Task<IActionResult> IsFriend(int friendId)
         {
-            if (CurrentUserId is null)
-                return Unauthorized("User is not authenticated");
-            var isFriend = await _friendsServices.CheckIsFriend(CurrentUserId.Value, friendId);
+            var isFriend = await _friendsServices.CheckIsFriend(CurrentUserId!.Value, friendId);
+
 
             return Ok(new { IsFriend = isFriend });
         }
@@ -37,12 +51,46 @@ namespace DAMAWebApi.Controllers
         [HttpGet("friends")]
         public async Task<ActionResult<FriendsResponseDto>> GetFriends()
         {
+            if (CurrentUserId is null)
+                return Unauthorized("User is not authenticated");
+
+            var userId = CurrentUserId.Value;
+
+            var result = await _friendsServices.GetFriends(userId);
+
             return Ok(new
             {
                 Message = "Friends retrieved successfully",
-                (await _friendsServices.GetFriends(CurrentUserId.Value)).TotalCount,
-                Data = (await _friendsServices.GetFriends(CurrentUserId.Value)).Friends
+                result.TotalCount,
+                Data = result.Friends
             });
         }
+
+
+        [HttpGet("userPosts")]
+
+        public async Task<IActionResult> GetUserPostsAsync(int page = 1, int pageSize = 50)
+        {
+            if (CurrentUserId == null)
+                return Unauthorized("Unauthorized user");
+
+            try
+            {
+                var posts = await postServicess.GetUserPostsAsync(CurrentUserId.Value, page, pageSize);
+
+                if (posts == null || !posts.Any())
+                    return Ok(new { posts = new List<object>() });
+
+                return Ok(new { posts });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+
+
     }
 }
