@@ -3,13 +3,12 @@ using DAMA.Application.Interfaces;
 using DAMA.Domain.Entities;
 using DAMA.Persistence;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace DAMA.Infrastructure.Services
 {
-    public class PostServices(DamaContext context, UserManager<User> userManager) : IPostServicess
+    public class PostServices(DamaContext context) : IPostServicess
     {
         public async Task CreatePostAsync(CreatePostDto createPostDto, int id)
         {
@@ -41,8 +40,6 @@ namespace DAMA.Infrastructure.Services
                 createPostDto.Video != null ? $"/uploads/posts/videos/{mediaName}" : null,
                 CreatedAt = DateTime.UtcNow,
                 UserId = id,
-
-
             };
 
             context.Posts.Add(post);
@@ -68,6 +65,34 @@ namespace DAMA.Infrastructure.Services
             context.Posts.Remove(post);
             await context.SaveChangesAsync();
         }
+
+
+        public async Task<List<NewsFeedDto>> GetFriendPostsAsync(int userID, int page = 1, int pageSize = 50)
+        {
+
+            var friendsIds = await context.Friendships.AsNoTracking()
+                .Where(f => f.RequesterId == userID || f.ReceiverId == userID)
+                .Select(f => f.RequesterId == userID ? f.ReceiverId : f.RequesterId)
+                .ToListAsync();
+            if (friendsIds.Count == 0)
+                friendsIds.Add(userID); // Include self if no friends
+            var posts = await context.Posts.AsNoTracking()
+                .Where(p => friendsIds.Contains(p.UserId) || p.UserId == userID)
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new NewsFeedDto
+                {
+                    PostId = p.PostId,
+                    PostTitle = p.Title,
+                    PostBody = p.Content,
+                    MediaUrl = p.MediaUrl
+                })
+                .ToListAsync();
+            return posts;
+        }
+
+
 
         private static async Task DeleteMediaFileIfExists(string mediaUrl)
         {

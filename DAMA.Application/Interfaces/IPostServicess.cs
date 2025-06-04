@@ -6,6 +6,6 @@ namespace DAMA.Application.Interfaces
     {
         public Task CreatePostAsync(CreatePostDto createPostDto, int id);
         public Task DeletePostAsync(int id);
-
+        public Task<List<NewsFeedDto>> GetFriendPostsAsync(int id, int page = 1, int pageSize = 50);
     }
 }
