@@ -61,19 +61,21 @@ namespace DAMAWebApi.Controllers
             if (CurrentUserId == null)
                 return Unauthorized("Unauthorized user");
 
-            if (id <= 0)
-                return BadRequest("Post not found.");
-
             try
             {
-                await post.DeletePostAsync(id);
-                return Ok("Post deleted successfully.");
+                var isDeleted = await post.DeletePostAsync(id);
+                if (isDeleted)
+                    return Ok("Post deleted successfully.");
+
+                return NotFound("Post not found or already deleted.");
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+
 
         [HttpGet("getFriendPosts")]
         public async Task<IActionResult> GetFriendPosts(int page = 1, int pageSize = 50)

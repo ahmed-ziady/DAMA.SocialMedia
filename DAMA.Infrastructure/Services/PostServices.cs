@@ -50,12 +50,11 @@ namespace DAMA.Infrastructure.Services
 
         }
 
-        public async Task DeletePostAsync(int postId)
+        public async Task<bool> DeletePostAsync(int postId)
         {
             var post = await context.Posts.FindAsync(postId);
-            if (post == null)
-                throw new Exception("Post was deleted or not found");
-
+            if (post is null)
+                return false;
 
             if (post.MediaUrl != null)
             {
@@ -65,6 +64,7 @@ namespace DAMA.Infrastructure.Services
 
             context.Posts.Remove(post);
             await context.SaveChangesAsync();
+            return true;
         }
 
 

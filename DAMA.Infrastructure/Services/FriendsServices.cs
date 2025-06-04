@@ -12,50 +12,56 @@ namespace DAMA.Infrastructure.Services
         public async Task AcceptFriendRequest(int requestId, int userId)
         {
             var request = await context.FriendRequests
-                .Include(fr => fr.Sender)
-                .Include(fr => fr.Receiver)
-                .FirstOrDefaultAsync(fr => fr.FriendRequestId == requestId && fr.ReceiverId == userId) ?? throw new ArgumentException("Friend request not found or you are not the receiver.");
+                .FirstOrDefaultAsync(fr => fr.FriendRequestId == requestId && fr.ReceiverId == userId)
+                ?? throw new ArgumentNullException(nameof(requestId), "Friend request not found or you are not the receiver.");
+
             if (request.Status != FriendRequestStatus.Pending)
-            {
                 throw new InvalidOperationException("Friend request is not pending.");
-            }
+
+            // Check if friendship already exists
+            bool friendshipExists = await context.Friendships.AnyAsync(f =>
+                (f.RequesterId == request.SenderId && f.ReceiverId == request.ReceiverId) ||
+                (f.RequesterId == request.ReceiverId && f.ReceiverId == request.SenderId));
+
+            if (friendshipExists)
+                throw new InvalidOperationException("Friendship already exists.");
+
             request.Accept();
-            Friendship[] friendships =
-            [
-                       new Friendship { RequesterId = request.SenderId, ReceiverId = request.ReceiverId },
-                       new Friendship { RequesterId = request.ReceiverId, ReceiverId = request.SenderId }
-            ];
-            await context.Friendships.AddRangeAsync(friendships);
+
+            Friendship friendships =
+
+                new()
+                { RequesterId = request.SenderId, ReceiverId = request.ReceiverId };
+
+
+            await context.Friendships.AddAsync(friendships);
             context.FriendRequests.Remove(request);
             await context.SaveChangesAsync();
 
-
             await SendNotification(request.SenderId, "FriendRequestAccepted", request);
         }
+
 
         public async Task<FriendsResponseDto> GetFriends(int userId)
         {
             var friends = await context.Friendships
                 .AsNoTracking()
-                .Where(f => f.RequesterId == userId || f.ReceiverId == userId)  // Add status filter
-                .Include(f => f.Receiver)
-                .Include(f => f.Requester)
-                .Select(fr => new FriendsDto
+                .Where(f =>
+                    f.RequesterId == userId || f.ReceiverId == userId)
+                .Select(f => new
                 {
-                    Id = fr.FriendshipId,
-                    FirstName = fr.RequesterId == userId
-                        ? fr.Receiver.FirstName
-                        : fr.Requester.FirstName,
-                    LastName = fr.RequesterId == userId
-                        ? fr.Receiver.LastName
-                        : fr.Requester.LastName,
-                    ProfileImageUrl = fr.RequesterId == userId
-                        ? fr.Receiver.ProfileImageUrl
-                        : fr.Requester.ProfileImageUrl,
-                    CreatedAt = fr.CreatedAt,
-                    FriendId = fr.RequesterId == userId
-                        ? fr.Receiver.Id
-                        : fr.Requester.Id
+                    Friend = f.RequesterId == userId ? f.Receiver : f.Requester,
+                    f.FriendshipId,
+                    f.CreatedAt
+                })
+                .Select(f => new FriendsDto
+                {
+                    Id = f.FriendshipId,
+                    FirstName = f.Friend.FirstName,
+                    LastName = f.Friend.LastName,
+                    ProfileImageUrl = f.Friend.ProfileImageUrl ?? String.Empty,
+                    CreatedAt = f.CreatedAt,
+                    FriendId = f.Friend.Id
                 })
                 .ToListAsync();
 
@@ -97,7 +103,7 @@ namespace DAMA.Infrastructure.Services
                     SenderId = fr.Sender.Id,
                     SenderFirstName = fr.Sender.FirstName,
                     SenderLastName = fr.Sender.LastName,
-                    SenderProfileImageUrl = fr.Sender.ProfileImageUrl
+                    SenderProfileImageUrl = fr.Sender.ProfileImageUrl ?? String.Empty
                 })
                 .ToListAsync();
         }
@@ -125,12 +131,15 @@ namespace DAMA.Infrastructure.Services
         public async Task RemoveFriend(int userId, int friendId)
         {
             var friendship = await context.Friendships
-                .FirstOrDefaultAsync(f => (f.RequesterId == userId && f.ReceiverId == friendId) ||
-                                          (f.RequesterId == friendId && f.ReceiverId == userId)) ?? throw new ArgumentException("Friendship not found.");
-            context.Friendships.RemoveRange(friendship);
-            await context.SaveChangesAsync();
-            await SendNotification(friendId, "FriendShipRemoved", userId);
+                .FirstOrDefaultAsync(f =>
+                    (f.RequesterId == userId && f.ReceiverId == friendId) ||
+                    (f.RequesterId == friendId && f.ReceiverId == userId))
+                ?? throw new ArgumentException("Friendship not found.");
 
+            context.Friendships.Remove(friendship);
+            await context.SaveChangesAsync();
+
+            await SendNotification(friendId, "FriendshipRemoved", userId);
         }
 
         public async Task SendFriendRequest(int senderId, int receiverId)
@@ -181,7 +190,7 @@ namespace DAMA.Infrastructure.Services
                     Id = fr.FriendRequestId,
                     FirstName = fr.Receiver.FirstName,
                     LastName = fr.Receiver.LastName,
-                    ProfileImageUrl = fr.Receiver.ProfileImageUrl,
+                    ProfileImageUrl = fr.Receiver.ProfileImageUrl ?? String.Empty,
                     CreatedAt = fr.RequestDate,
                     FriendId = fr.Receiver.Id
                 })
@@ -204,11 +213,11 @@ namespace DAMA.Infrastructure.Services
             await SendNotification(request.ReceiverId, "FriendRequestCanceled", request);
         }
 
-        public async Task<bool>CheckIsFriend(int userId, int friendId)
+        public async Task<bool> CheckIsFriend(int userId, int friendId)
         {
             if (userId == friendId)
                 throw new ArgumentException("You cannot check friendship with yourself.");
-            if( userId <= 0 || friendId <= 0)
+            if (userId <= 0 || friendId <= 0)
                 throw new ArgumentException("User IDs must be greater than zero.");
             var isFriend = await context.Friendships
                 .AsNoTracking()

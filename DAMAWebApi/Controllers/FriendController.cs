@@ -86,7 +86,7 @@ namespace DAMAWebApi.Controllers
         public async Task<IActionResult> RemoveFriend(int friendId)
         {
             await _friendService.RemoveFriend(CurrentUserId, friendId);
-            return NoContent();
+            return Ok("Removed Correctlly");
         }
 
         [HttpGet("GetRequestsSended")]
