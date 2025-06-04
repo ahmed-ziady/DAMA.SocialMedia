@@ -29,8 +29,7 @@ namespace DAMAWebApi.Controllers
             if (CurrentUserId is null)
                 return Unauthorized("User is not authenticated");
             var isFriend = await _friendsServices.CheckIsFriend(CurrentUserId.Value, friendId);
-            if (isFriend == false)
-                return NotFound(new { IsFriend = isFriend });
+
             return Ok(new { IsFriend = isFriend });
         }
 
@@ -38,12 +37,11 @@ namespace DAMAWebApi.Controllers
         [HttpGet("friends")]
         public async Task<ActionResult<FriendsResponseDto>> GetFriends()
         {
-            var result = await _friendsServices.GetFriends(CurrentUserId.Value);
             return Ok(new
             {
                 Message = "Friends retrieved successfully",
-                result.TotalCount,
-                Data = result.Friends
+                (await _friendsServices.GetFriends(CurrentUserId.Value)).TotalCount,
+                Data = (await _friendsServices.GetFriends(CurrentUserId.Value)).Friends
             });
         }
     }

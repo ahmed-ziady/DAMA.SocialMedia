@@ -55,7 +55,7 @@ namespace DAMA.Infrastructure.Services
             }
 
             var uniqueFileName = await FileHelper.SaveImageAsync(image, uploadsRoot);
-            return Path.Combine("uploads", "users", imageType, uniqueFileName).Replace("\\", "/");
+            return Path.Combine("/uploads", "users", imageType, uniqueFileName).Replace("\\", "/");
         }
 
         private static void ValidateImage(IFormFile image)

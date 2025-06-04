@@ -16,6 +16,7 @@ namespace DAMA.Domain.Entities
         public ICollection<FriendRequest> ReceivedFriendRequests { get; set; } = [];
         public ICollection<Friendship> FriendshipsRequester { get; set; } = [];
         public ICollection<Friendship> FriendshipsReceiver { get; set; } = [];
+        public ICollection<Post> Posts { get; set; } = [];
 
 
     }

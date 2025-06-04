@@ -79,6 +79,7 @@ builder.Services.AddScoped<IFriendRecommendationService, FriendRecommendationSer
 builder.Services.AddSingleton<IConnectionTracker, ConnectionTracker>();
 builder.Services.AddScoped<IProfile, ProfileServices>();
 builder.Services.AddScoped<ISettings, SettingServices>();
+builder.Services.AddScoped<IPostServicess, PostServices>();
 //builder.Services.AddScoped<INotificationHubClient, NotificationHub>();
 
 // SignalR and Controllers

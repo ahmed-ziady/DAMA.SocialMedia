@@ -13,6 +13,7 @@ namespace DAMA.Persistence
 
         public DbSet<Friendship> Friendships { get; set; } = null!;
         public DbSet<FriendRequest> FriendRequests { get; set; } = null!;
+        public DbSet<Post> Posts { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -65,6 +66,25 @@ namespace DAMA.Persistence
 
 
             });
+
+
+            builder.Entity<Post>(entity =>
+            {
+                entity.HasKey(p => p.PostId);
+                entity.HasOne(p => p.User)
+                    .WithMany(u => u.Posts)
+                    .HasForeignKey(p => p.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.Property(p => p.Content)
+                    .IsRequired()
+                    .HasMaxLength(500);
+                entity.Property(p => p.CreatedAt)
+                    .HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(p => new { p.PostId, p.UserId });
+
+            });
+
+
 
 
             // Optional: Customize table names.

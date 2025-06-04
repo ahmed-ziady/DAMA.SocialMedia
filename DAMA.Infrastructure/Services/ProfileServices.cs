@@ -11,8 +11,12 @@ namespace DAMA.Infrastructure.Services
     {
         public async Task<ProfileResponseDto> GetProfileAsync(int userId)
         {
+            bool isFriend = await _context.Friendships.AnyAsync(u => u.RequesterId == userId || u.ReceiverId == userId);
+
 
             var profile = await _context.Users.AsNoTracking().Where(u => u.Id == userId).Select(
+
+
 
                 u => new ProfileResponseDto
                 {
@@ -23,6 +27,7 @@ namespace DAMA.Infrastructure.Services
                     DateOfBirth = (DateOnly)u.DateOfBirth,
                     ProfileImageUrl = u.ProfileImageUrl,
                     CoverImageUrl = u.CoverImageUrl,
+                    IsFriend = isFriend
 
                 }
 

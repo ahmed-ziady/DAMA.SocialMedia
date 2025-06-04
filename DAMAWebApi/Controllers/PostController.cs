@@ -1,37 +1,44 @@
-﻿using DAMA.Application.DTOs.Posts;
-using Microsoft.AspNetCore.Authorization;
+﻿using DAMA.Application.DTOs.PostDto;
+using DAMA.Application.Interfaces;
+using DAMA.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
-[Route("api/posts")]
-[ApiController]
-[Authorize]
-public class PostController : ControllerBase
+namespace DAMAWebApi.Controllers
 {
-    private readonly IPostService _postService;
-
-    public PostController(IPostService postService)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class PostController(IPostServicess post, UserManager<User> userManager) : ControllerBase
     {
-        _postService = postService;
-    }
+        private int CurrentUserId => int.Parse(userManager.GetUserId(User)!);
 
-    private int GetCurrentUserId()
-    {
-        return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-    }
+        [HttpPost("createPost")]
+        public async Task<IActionResult> CreatePostAsync([FromForm] CreatePostDto createPostDto)
+        {
+            if (createPostDto == null)
+            {
+                return BadRequest("Create post data is required.");
+            }
 
-    [HttpPost("add")]
-    public async Task<IActionResult> AddPost([FromBody] CreatePostDto postDto)
-    {
-        int userId = GetCurrentUserId();
-        var post = await _postService.AddPost(userId, postDto);
-        return Ok(post);
-    }
+            try
+            {
+                await post.CreatePostAsync(createPostDto, CurrentUserId);
+                return Ok("Post created successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllPosts()
-    {
-        var posts = await _postService.GetAllPosts();
-        return Ok(posts);
+        [HttpDelete("deletePost")]
+        public async Task<IActionResult> DeletePost(int id)
+        {
+            if (id <= 0)
+                return BadRequest("Post Not Found");
+
+            await post.DeletePostAsync(id);
+            return Ok("Post deleted successfully.");
+        }
     }
 }

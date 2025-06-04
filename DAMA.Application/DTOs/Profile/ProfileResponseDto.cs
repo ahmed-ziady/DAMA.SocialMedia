@@ -9,5 +9,6 @@
         public string ProfileImageUrl { get; init; } = string.Empty;
         public string CoverImageUrl { get; init; } = string.Empty;
 
+        public bool IsFriend { get; init; }
     }
 }

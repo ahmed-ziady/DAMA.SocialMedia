@@ -5,5 +5,6 @@
     {
         public List<FriendsDto> Friends { get; set; } = new();
         public int TotalCount { get; set; }
+
     }
 }
