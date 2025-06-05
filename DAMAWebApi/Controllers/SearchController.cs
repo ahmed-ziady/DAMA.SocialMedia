@@ -1,6 +1,7 @@
 ﻿using DAMA.Application.DTOs.SearchDto;
 using DAMA.Application.Interfaces;
 using DAMA.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,8 @@ namespace DAMAWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+
     public class SearchController(
         ISearchService searchService,
         UserManager<User> userManager) : ControllerBase

@@ -14,7 +14,9 @@ namespace DAMA.Persistence
         public DbSet<Friendship> Friendships { get; set; } = null!;
         public DbSet<FriendRequest> FriendRequests { get; set; } = null!;
         public DbSet<Post> Posts { get; set; } = null!;
+        public DbSet<Comment> Comments { get; set; }
 
+        public DbSet<Reaction> Reactions { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -84,6 +86,37 @@ namespace DAMA.Persistence
 
             });
 
+            builder.Entity<Comment>(entity =>
+            {
+                entity.HasKey(c => c.CommentId);
+
+                entity.HasOne(c => c.Post)
+               .WithMany(p => p.Comments)
+               .HasForeignKey(c => c.PostId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+
+                entity.Property(c => c.CreatedAt)
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+            });
+
+            builder.Entity<Reaction>(entity =>
+            {
+                entity.HasKey(r => r.ReactionId);
+
+                entity.HasOne(r => r.Post)
+                      .WithMany(p => p.Reactions)
+                      .HasForeignKey(r => r.PostId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+
+                entity.Property(r => r.CreatedAt)
+                      .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.Property(r => r.ReactionType)
+                      .IsRequired();
+            });
 
 
 

@@ -2,9 +2,7 @@
 {
     public class Post
     {
-        public Post()
-        {
-        }
+
         public int PostId { get; set; }
 
         public string Title { get; set; } = string.Empty;
@@ -13,7 +11,10 @@
 
         public DateTime CreatedAt { get; set; }
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User? User { get; set; }
+
+        public ICollection<Comment> Comments { get; set; } = [];
+        public ICollection<Reaction> Reactions { get; set; } = [];
 
     }
 }

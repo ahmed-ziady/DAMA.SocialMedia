@@ -1,11 +1,8 @@
 ﻿namespace DAMA.Application.DTOs.PostDto
 {
-    public record NewsFeedDto
+    public record UserPosts
     {
-        public int UserId { get; set; }
-        public string FirstName { get; set; } = String.Empty;
-        public string LastName { get; set; } = String.Empty;
-        public string? ProfileImageUrl { get; set; }
+  
         public int PostId { get; set; }
         public string PostTitle { get; set; } = String.Empty;
         public string PostBody { get; set; } = String.Empty;

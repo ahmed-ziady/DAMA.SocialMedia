@@ -69,14 +69,12 @@ namespace DAMAWebApi.Controllers
 
         [HttpGet("userPosts")]
 
-        public async Task<IActionResult> GetUserPostsAsync(int page = 1, int pageSize = 50)
+        public async Task<IActionResult> GetUserPostsAsync(int UserId, int page = 1, int pageSize = 50)
         {
-            if (CurrentUserId == null)
-                return Unauthorized("Unauthorized user");
 
             try
             {
-                var posts = await postServicess.GetUserPostsAsync(CurrentUserId.Value, page, pageSize);
+                var posts = await postServicess.GetUserPostsAsync(UserId, page, pageSize);
 
                 if (posts == null || !posts.Any())
                     return Ok(new { posts = new List<object>() });

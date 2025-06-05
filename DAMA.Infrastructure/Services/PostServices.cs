@@ -1,6 +1,7 @@
 ﻿using DAMA.Application.DTOs.PostDto;
 using DAMA.Application.Interfaces;
 using DAMA.Domain.Entities;
+using DAMA.Domain.Enums;
 using DAMA.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ using System.Diagnostics;
 
 namespace DAMA.Infrastructure.Services
 {
-    public class PostServices(DamaContext context) : IPostServicess
+    public partial class PostServices(DamaContext context) : IPostServicess
     {
         public async Task CreatePostAsync(CreatePostDto createPostDto, int id)
         {
@@ -50,9 +51,9 @@ namespace DAMA.Infrastructure.Services
 
         }
 
-        public async Task<bool> DeletePostAsync(int postId)
+        public async Task<bool> DeletePostAsync(int postId, int userId)
         {
-            var post = await context.Posts.FindAsync(postId);
+            var post = await context.Posts.Where(p =>p.PostId == postId && p.UserId == userId).FirstOrDefaultAsync();
             if (post is null)
                 return false;
 
@@ -68,48 +69,189 @@ namespace DAMA.Infrastructure.Services
         }
 
 
-        public async Task<List<NewsFeedDto>> GetFriendPostsAsync(int userID, int page = 1, int pageSize = 50)
-        {
 
+        public async Task<List<NewsFeedDto>> NewsFeed(int userID, int page = 1, int pageSize = 50)
+        {
             var friendsIds = await context.Friendships.AsNoTracking()
                 .Where(f => f.RequesterId == userID || f.ReceiverId == userID)
                 .Select(f => f.RequesterId == userID ? f.ReceiverId : f.RequesterId)
                 .ToListAsync();
-            if (friendsIds.Count == 0)
-                friendsIds.Add(userID); // Include self if no friends
-            var posts = await context.Posts.AsNoTracking()
-                .Where(p => friendsIds.Contains(p.UserId) || p.UserId == userID)
+
+            if (!friendsIds.Contains(userID))
+                friendsIds.Add(userID); // Include self posts
+
+
+
+
+
+            var posts = await context.Posts
+                .Where(p => friendsIds.Contains(p.UserId))
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+                .Take(pageSize).Include(u => u.User)
                 .Select(p => new NewsFeedDto
                 {
+                    UserId = p.User!.Id,
+                    FirstName = p.User.FirstName,
+                    LastName = p.User.LastName,
+                    ProfileImageUrl = p.User.ProfileImageUrl,
                     PostId = p.PostId,
                     PostTitle = p.Title,
                     PostBody = p.Content,
-                    MediaUrl = p.MediaUrl
+                    MediaUrl = p.MediaUrl,
+                    Comments = p.Comments.Select(c => new CommentResponseDto
+                    {
+                        CommentId = c.CommentId,
+                        Content = c.CommentText,
+
+                        UserID = c.User.Id,
+                        FirstName = c.User.FirstName,
+                        LastName = c.User.LastName,
+                        ProfileImageUrl = c.User.ProfileImageUrl
+
+                    }).ToList(),
+                    Reactions = p.Reactions.Select(r => new ReactionResponseDto
+                    {
+                        ReactionType = r.ReactionType,
+                        UserID = r.User.Id,
+                        FirstName = r.User.FirstName,
+                        LastName = r.User.LastName,
+                        ProfileImageUrl = r.User.ProfileImageUrl
+                    }).ToList(),
+
+                    TotalComments = p.Comments.Count(),
+                    TotalReactions = p.Reactions.Count()
+
                 })
+                .AsNoTracking()
                 .ToListAsync();
+
+
+
             return posts;
         }
 
-        public async Task<List<NewsFeedDto>> GetUserPostsAsync(int UserId, int page = 1, int pageSize = 50)
+        public async Task<List<UserPosts>> GetUserPostsAsync(int UserId, int page = 1, int pageSize = 50)
         {
             var posts = await context.Posts.AsNoTracking().Where(p => p.UserId == UserId).OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(p => new NewsFeedDto
-                {
-                    MediaUrl = p.MediaUrl,
+                  .Select(p => new UserPosts
+                  {
+                      PostId = p.PostId,
+                      PostTitle = p.Title,
+                      PostBody = p.Content,
+                      MediaUrl = p.MediaUrl,
+                      Comments = p.Comments.Select(c => new CommentResponseDto
+                      {
+                          CommentId = c.CommentId,
+                          Content = c.CommentText,
 
-                    PostId = p.PostId,
-                    PostTitle = p.Title,
-                    PostBody = p.Content
+                          UserID = c.User.Id,
+                          FirstName = c.User.FirstName,
+                          LastName = c.User.LastName,
+                          ProfileImageUrl = c.User.ProfileImageUrl
 
-                })
+                      }).ToList(),
+                      Reactions = p.Reactions.Select(r => new ReactionResponseDto
+                      {
+                          ReactionType = r.ReactionType,
+                          UserID = r.User.Id,
+                          FirstName = r.User.FirstName,
+                          LastName = r.User.LastName,
+                          ProfileImageUrl = r.User.ProfileImageUrl
+                      }).ToList(),
+
+                      TotalComments = p.Comments.Count(),
+                      TotalReactions = p.Reactions.Count()
+
+                  })
+                .AsNoTracking()
                 .ToListAsync();
             return posts;
         }
+
+
+
+        public async Task AddCommentAsync(string content, int postId, int userId)
+        {
+            if (string.IsNullOrWhiteSpace(content) || postId <= 0 || userId <= 0)
+                throw new ArgumentException("Invalid comment data.");
+            var post = await context.Posts.FindAsync(postId);
+            if (post == null)
+                throw new InvalidOperationException("Post not found.");
+            var comment = new Comment
+            {
+                CommentText = content,
+                CreatedAt = DateTime.UtcNow,
+                PostId = postId,
+                UserId = userId
+            };
+            context.Comments.Add(comment);
+            await context.SaveChangesAsync();
+
+        }
+
+        public async Task<bool> DeleteCommentAsync(int commentId, int userId)
+        {
+            var comment = await context.Comments
+                .Where(c => c.CommentId == commentId && c.UserId == userId)
+                .FirstOrDefaultAsync();
+            if (comment == null)
+                return false;
+            context.Comments.Remove(comment);
+            await context.SaveChangesAsync();
+            return true;
+        }
+
+
+
+        public async Task<ReactionAction> AddReactionAsync(string type, int postId, int userId)
+        {
+            if (string.IsNullOrWhiteSpace(type) || postId <= 0 || userId <= 0)
+                throw new ArgumentException("Invalid reaction data.");
+
+            var post = await context.Posts.FindAsync(postId);
+            if (post == null)
+                throw new InvalidOperationException("Post not found.");
+
+            var existingReaction = await context.Reactions
+                .FirstOrDefaultAsync(r => r.PostId == postId && r.UserId == userId);
+
+            if (existingReaction != null)
+            {
+                if (existingReaction.ReactionType == type)
+                {
+                    context.Reactions.Remove(existingReaction);
+                    await context.SaveChangesAsync();
+                    return ReactionAction.Removed;
+                }
+                else
+                {
+                    // Different reaction, update it
+                    existingReaction.ReactionType = type;
+                    context.Reactions.Update(existingReaction);
+                    await context.SaveChangesAsync();
+                    return ReactionAction.Updated;
+                }
+            }
+            else
+            {
+                // No reaction exists, add a new one
+                var newReaction = new Reaction
+                {
+                    ReactionType = type,
+                    CreatedAt = DateTime.UtcNow,
+                    PostId = postId,
+                    UserId = userId
+                };
+                context.Reactions.Add(newReaction);
+                await context.SaveChangesAsync();
+                return ReactionAction.Added;
+            }
+        }
+
+
 
         private static async Task DeleteMediaFileIfExists(string mediaUrl)
         {
